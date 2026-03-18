@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDTECH Suite | Banner Generator</title>
+    <meta name="description" content="Generador de banners para rutas de aprendizaje con Pexels API">
+    <link rel="stylesheet" href="banner_style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ag-psd@30.1.0/dist/bundle.js"></script>
+</head>
+<body>
+
+    <!-- ═══ LOGIN OVERLAY ═══ -->
+    <div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--bg-primary) 0%,var(--bg-secondary) 50%,var(--bg-tertiary) 100%);display:flex;align-items:center;justify-content:center;font-family:var(--font-main);">
+      <div style="background:var(--bg-secondary);border:1px solid var(--accent-border);border-radius:var(--radius-lg);padding:40px;width:380px;max-width:90vw;box-shadow:var(--shadow-lg);">
+        <div style="text-align:center;margin-bottom:28px;">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">EDTECH Suite</div>
+          <div style="font-size:1.3rem;font-weight:600;color:var(--text-primary);">Banner Generator</div>
+          <div style="font-size:0.7rem;color:var(--text-secondary);margin-top:6px;">Acceso restringido al equipo</div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:0.68rem;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Correo institucional</label>
+          <input type="email" id="login-email" placeholder="tu.nombre@unifranz.edu.bo" style="width:100%;padding:10px 14px;font-size:0.85rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;box-sizing:border-box;transition:var(--transition);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:0.68rem;color:var(--text-secondary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">Contraseña</label>
+          <input type="password" id="login-password" placeholder="••••••••" style="width:100%;padding:10px 14px;font-size:0.85rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;box-sizing:border-box;transition:var(--transition);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div id="login-error" style="display:none;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.3);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px;font-size:0.72rem;color:var(--danger);"></div>
+        <button id="login-btn" style="width:100%;padding:12px;font-size:0.85rem;font-weight:600;background:var(--accent);color:var(--bg-primary);border:none;border-radius:var(--radius);cursor:pointer;transition:var(--transition);letter-spacing:0.5px;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Iniciar sesión</button>
+        <div style="text-align:center;margin-top:16px;font-size:0.6rem;color:var(--text-muted);">UNIFRANZ EdTech &copy; 2026</div>
+      </div>
+    </div>
+    <script>
+    (function() {
+      const AUTHORIZED = [
+        'andres.salinas@unifranz.edu.bo',
+        'mariel.villanueva.consultor@unifranz.edu.bo',
+        'ruby.monroy.consultor@unifranz.edu.bo',
+        'consultor.diego.alvarado@unifranz.edu.bo',
+        'consultor.moises.luna@unifranz.edu.bo',
+        'consultor.felipe.viscarra@unifranz.edu.bo',
+        'edson.llanque.consultor@unifranz.edu.bo',
+        'edtech.becarios@unifranz.edu.bo',
+        'docente.online@unifranz.edu.bo',
+        'estudiante.online@unifranz.edu.bo'
+      ];
+      const PASS = 'EdTech2026';
+      const overlay = document.getElementById('login-overlay');
+      // Check existing session
+      const session = localStorage.getItem('edtech_banner_session');
+      if (session) {
+        try {
+          const s = JSON.parse(session);
+          if (AUTHORIZED.includes(s.email) && Date.now() - s.ts < 7 * 24 * 3600 * 1000) {
+            overlay.style.display = 'none';
+          }
+        } catch(e) {}
+      }
+      document.getElementById('login-btn').addEventListener('click', doLogin);
+      document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+      document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-password').focus(); });
+      function doLogin() {
+        const email = document.getElementById('login-email').value.trim().toLowerCase();
+        const pass = document.getElementById('login-password').value;
+        const errEl = document.getElementById('login-error');
+        if (!AUTHORIZED.includes(email)) {
+          errEl.style.display = 'block';
+          errEl.textContent = 'Correo no autorizado. Contacta al administrador.';
+          return;
+        }
+        if (pass !== PASS) {
+          errEl.style.display = 'block';
+          errEl.textContent = 'Contraseña incorrecta.';
+          return;
+        }
+        localStorage.setItem('edtech_banner_session', JSON.stringify({ email, ts: Date.now() }));
+        overlay.style.display = 'none';
+      }
+    })();
+    </script>
+
+    <!-- ═══ HEADER ═══ -->
+    <header class="app-header">
+        <h1>
+            <span class="brand">EDTECH</span>
+            <span class="sep">|</span>
+            Banner Generator
+        </h1>
+        <div class="header-actions">
+            <input type="file" id="docx-upload" accept=".docx" multiple class="file-input" style="display:none;">
+            <label for="docx-upload" class="btn btn-primary" style="cursor:pointer;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Cargar DOCX
+            </label>
+            <button id="search-all-btn" class="btn" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Buscar Todas
+            </button>
+            <button id="download-all-btn" class="btn btn-success" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Descargar PNG/JPG ZIP
+            </button>
+            <button id="btn-download-psd-zip" class="btn" style="background:var(--bg-tertiary);border-color:var(--border);" disabled>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M10 13v-2a2 2 0 0 1 2-2s1.5 0 2 2v2s0-1.5 2-1.5"/><line x1="16" y1="17" x2="16" y2="17.01"/></svg>
+                Descargar PSD ZIP
+            </button>
+            <button class="btn" id="btn-settings" title="Configuración" style="padding:6px 10px;font-size:0.7rem;gap:4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Config
+            </button>
+            <button class="btn" id="btn-logout" title="Cerrar sesión" style="padding:6px 10px;font-size:0.7rem;gap:4px;opacity:0.7;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Salir
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══ BODY ═══ -->
+    <div class="app-body">
+
+        <!-- ── LEFT SIDEBAR: Banner List ── -->
+        <aside class="sidebar-left">
+            <div class="sidebar-section">
+                <h3>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Documentos Cargados
+                </h3>
+                <div id="loaded-docs" class="loaded-docs">
+                    <span style="font-size:0.7rem; color:var(--text-muted);">Ningún documento cargado</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section" style="border-bottom:none; padding-bottom:4px;">
+                <h3>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+                    Banners (13)
+                </h3>
+            </div>
+
+            <div class="banner-list-container" id="banner-list">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="bulk-actions">
+                <button id="render-all-btn" class="btn btn-primary" style="font-size:0.72rem; width:100%;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Renderizar Todos
+                </button>
+            </div>
+
+            <!-- Global PNG Overlay Upload (Fixed Bottom Sidebar) -->
+            <div class="sidebar-section overlay-upload-fixed" style="background: var(--bg-tertiary); border:1px solid var(--border); border-radius: var(--radius); padding: 10px 12px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="flex-shrink:0;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" style="opacity:0.7;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="font-size:0.68rem; font-weight:600; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px;">Capa PNG (Overlay)</div>
+                        <div style="font-size:0.58rem; color:var(--text-muted);">Se aplica a TODOS los banners</div>
+                    </div>
+                    <input type="file" id="overlay-file-input" accept=".png" style="display:none;">
+                    <button class="btn btn-primary" id="overlay-drop-zone" style="padding:5px 12px; font-size:0.65rem; gap:4px; white-space:nowrap; flex-shrink:0;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Subir PNG
+                    </button>
+                </div>
+                <div class="overlay-preview" id="overlay-preview" style="margin-top:6px; display:none;">
+                    <button class="remove-overlay" id="btn-remove-overlay" title="Eliminar overlay">✕</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── CENTRAL MAIN AREA ── -->
+        <main class="main-area" id="main-area">
+            
+            <div class="empty-state" id="empty-state">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                    <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <h3>Banner Generator</h3>
+                <p>Carga tus DOCX para extraer los conceptos de búsqueda,<br>o selecciona un banner de la lista para comenzar.</p>
+            </div>
+
+            <!-- TOP HALF: CANVAS PREVIEW -->
+            <div class="canvas-panel" id="canvas-preview" style="display:none;">
+                <div class="canvas-preview-header">
+                    <span class="preview-label" id="preview-label">—</span>
+                    <span class="preview-dimensions">1283 × 250 px</span>
+                </div>
+                
+                <div class="canvas-container-outer">
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="banner-canvas" width="1283" height="250"></canvas>
+                        <!-- Visual Bounding Box Overlay -->
+                        <div class="bbox-overlay" id="bbox-overlay" style="display:none;">
+                            <div class="bbox-border"></div>
+                            <div class="bbox-handle" data-handle="nw"></div>
+                            <div class="bbox-handle" data-handle="n"></div>
+                            <div class="bbox-handle" data-handle="ne"></div>
+                            <div class="bbox-handle" data-handle="e"></div>
+                            <div class="bbox-handle" data-handle="se"></div>
+                            <div class="bbox-handle" data-handle="s"></div>
+                            <div class="bbox-handle" data-handle="sw"></div>
+                            <div class="bbox-handle" data-handle="w"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Minimal Toolbar under Canvas -->
+                <div class="canvas-toolbar">
+                    <div class="tool-group">
+                        <button class="btn" id="btn-download-single">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Descargar PNG
+                        </button>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tool-group">
+                        <label>Color fondo</label>
+                        <input type="color" id="bg-color-picker" value="#c3c3c3" style="width:28px; height:22px; padding:0; border:1px solid var(--border); border-radius:3px; cursor:pointer; background:transparent; vertical-align:middle;">
+                        <input type="text" id="bg-color-hex" value="#c3c3c3" maxlength="7" style="width:62px; padding:3px 6px; font-size:0.65rem; font-family:var(--font-mono); background:var(--bg-primary); border:1px solid var(--border); border-radius:3px; color:var(--text-primary); text-transform:uppercase;">
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tool-group">
+                        <label>Opacidad imagen</label>
+                        <input type="range" id="bg-brightness" min="0" max="100" value="40">
+                        <span class="ctrl-value" id="bg-brightness-val">40%</span>
+                    </div>
+                    <div class="separator"></div>
+                    <div class="tool-group">
+                        <label>Opacidad overlay</label>
+                        <input type="range" id="overlay-opacity" min="0" max="100" value="100">
+                        <span class="ctrl-value" id="overlay-opacity-val">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM HALF: EDITOR PANEL (SPLIT LAYOUT) -->
+            <div class="editor-panel" id="editor-panel">
+                <div class="editor-content" id="editor-content">
+                    <!-- Populated dynamically by JS with CSS Grid layout -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="app-footer">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+        <span>Designed for <strong>EDTECH</strong></span>
+    </footer>
+
+    <!-- ═══ LOADING OVERLAY ═══ -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p id="loading-text">Procesando...</p>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST CONTAINER ═══ -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ═══ SETTINGS MODAL ═══ -->
+    <div id="settings-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(14,17,23,0.85);align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+      <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-lg);width:450px;max-width:90vw;box-shadow:var(--shadow-lg);display:flex;flex-direction:column;">
+        <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+          <h2 style="margin:0;font-size:1rem;color:var(--text-primary);display:flex;align-items:center;gap:8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Configuración EDTECH
+          </h2>
+          <button id="btn-close-settings" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:16px;max-height:70vh;overflow-y:auto;">
+          
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">HuggingFace API Token</label>
+            <p style="font-size:0.65rem;color:var(--text-secondary);margin:0 0 8px 0;line-height:1.4;">Necesario para generar imágenes con IA localmente. Puedes crear uno gratis <a href="https://huggingface.co/settings/tokens" target="_blank" style="color:var(--info);">aquí</a>.</p>
+            <input type="password" id="cfg-hf-token" placeholder="hf_..." style="width:100%;padding:10px;font-size:0.8rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;box-sizing:border-box;transition:var(--transition);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Pexels API Key</label>
+            <p style="font-size:0.65rem;color:var(--text-secondary);margin:0 0 8px 0;line-height:1.4;">Token para buscar fotos de stock. Se usa uno por defecto si se deja en blanco.</p>
+            <input type="password" id="cfg-pexels-token" placeholder="Dejar en blanco para usar default" style="width:100%;padding:10px;font-size:0.8rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);outline:none;box-sizing:border-box;transition:var(--transition);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+
+          <div style="border-top:1px solid var(--border); margin-top:8px; padding-top:16px;">
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Exportación Web (Calidad)</label>
+            <p style="font-size:0.65rem;color:var(--text-secondary);margin:0 0 8px 0;line-height:1.4;">Formato por defecto para los banners individuales y el ZIP.</p>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <select id="cfg-export-format" style="padding:8px 12px; font-size:0.8rem; background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius); color:var(--text-primary); outline:none;">
+                <option value="image/jpeg">JPG</option>
+                <option value="image/png">PNG</option>
+              </select>
+              <div style="flex:1; display:flex; align-items:center; gap:8px;">
+                <input type="range" id="cfg-export-quality" min="10" max="100" value="100" style="flex:1;">
+                <span id="cfg-quality-val" style="font-size:0.75rem; color:var(--accent); font-family:var(--font-mono); width:32px;">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border); margin-top:8px; padding-top:16px;">
+            <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Capa PNG (Overlay) Global</label>
+            <p style="font-size:0.65rem;color:var(--text-secondary);margin:0 0 8px 0;line-height:1.4;">Reemplaza el diseño "banner_overlay.png" por defecto. Se aplicará a todos los banners que lo soporten.</p>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <input type="file" id="cfg-overlay-upload" accept=".png" style="display:none;">
+              <button class="btn btn-primary" onclick="document.getElementById('cfg-overlay-upload').click()" style="padding:6px 12px; font-size:0.7rem;">Cambiar PNG</button>
+              <span id="cfg-overlay-name" style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono);">banner_overlay.png (default)</span>
+            </div>
+          </div>
+
+        </div>
+        <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:12px;background:var(--bg-primary);border-bottom-left-radius:var(--radius-lg);border-bottom-right-radius:var(--radius-lg);">
+          <button id="btn-cancel-settings" style="padding:8px 16px;font-size:0.75rem;background:transparent;color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:var(--transition);" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">Cancelar</button>
+          <button id="btn-save-settings" style="padding:8px 16px;font-size:0.75rem;background:var(--accent);color:var(--bg-primary);border:none;border-radius:var(--radius);cursor:pointer;font-weight:600;transition:var(--transition);" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Guardar Configuración</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="banner_app.js"></script>
+</body>
+</html>
