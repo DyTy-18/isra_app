@@ -487,49 +487,6 @@ body {
   color: var(--accent);
 }
 
-/* Source Tabs (Pexels / Envato) */
-.source-tabs {
-  display: flex;
-  gap: 0;
-  margin-bottom: 12px;
-  border-bottom: 2px solid var(--border);
-}
-
-.source-tab {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: var(--font-main);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: var(--transition);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.source-tab:hover {
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-}
-
-.source-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
-}
-
-.source-tab.active svg {
-  stroke: var(--accent);
-}
-
 /* Search concept field */
 .search-field {
   display: flex;

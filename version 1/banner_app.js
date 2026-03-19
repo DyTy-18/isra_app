@@ -12,10 +12,6 @@
   let PEXELS_KEY = localStorage.getItem('edtech_pexels_token') || DEFAULT_PEXELS_KEY;
   const PEXELS_SEARCH = 'https://api.pexels.com/v1/search';
 
-  // ── Envato API ──
-  let ENVATO_TOKEN = localStorage.getItem('edtech_envato_token') || '';
-  const ENVATO_SEARCH = 'https://api.envato.com/v1/discovery/search/search/item';
-
   // ── HuggingFace Inference API (100% GRATIS) ──
   // Obtén tu token gratis en: https://huggingface.co/settings/tokens
   let HF_TOKEN = localStorage.getItem('hf_token') || '';
@@ -59,7 +55,6 @@
       bgImageThumb: null,    // for UI preview
       overlayDataUrl: null,  // user's uploaded PNG overlay
       pexelsResults: [],     // array of pexels images
-      envatoResults: [],     // array of envato images
       aiGeneratedUrl: null,  // DALL-E generated image (data URL)
       rendered: false,       // has canvas been rendered
       brightness: 40,        // background darkening (0=black, 100=full)
@@ -81,7 +76,6 @@
     careerContext: '',       // e.g. "Contaduría Pública"
     docPrefix: '',           // e.g. "CGU-511" — extracted from loaded doc filename
     activeSource: 'pexels',  // 'pexels' or 'huggingface'
-    activeImageSource: 'pexels', // 'pexels' or 'envato' — tab selector for image search
     isDragging: false,       // canvas drag state
     dragStartX: 0,
     dragStartY: 0,
@@ -362,9 +356,8 @@
       ? chips.map(kw => '<span class="keyword-chip" data-kw="' + kw + '">' + kw + '</span>').join('')
       : '<span style="color:var(--text-muted); font-size:0.7rem;">Carga documentos para ver propuestas</span>';
 
-    // Image results based on active tab
-    const isPexelsTab = state.activeImageSource === 'pexels';
-    const currentResults = isPexelsTab ? (b.pexelsResults || []) : (b.envatoResults || []);
+    // Pexels results
+    const currentResults = b.pexelsResults || [];
 
     // AI prompt
     const carrera = state.careerContext || state.subjectContext || 'la carrera';
@@ -373,11 +366,10 @@
     const shotType = b.aiShotType || 'medium';
     const aiPrompt = buildFullPrompt(gender, b.aiAge || '30', aiCtx, carrera, shotType);
 
-    // Pre-build image results HTML (shared for both Pexels and Envato)
-    const sourceLabel = isPexelsTab ? 'pexels' : 'envato';
-    const imageResultsHtml = currentResults.length === 0
+    // Pre-build Pexels results HTML
+    const pexelsResultsHtml = currentResults.length === 0
       ? '<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); font-size:0.75rem; padding:20px 0;">Escribe un concepto y pulsa Buscar</div>'
-      : currentResults.map((p, i) => '<div class="pexels-thumb ' + (b.bgImageUrl === p._largeUrl ? "selected" : "") + '" data-idx="' + i + '" data-source="' + sourceLabel + '"><img src="' + p._thumbUrl + '" alt="' + (p._alt || "") + '" loading="lazy"><span class="photographer"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:relative; top:1px; margin-right:2px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> ' + p._author + '</span></div>').join('');
+      : currentResults.map((p, i) => '<div class="pexels-thumb ' + (b.bgImageUrl === p._largeUrl ? "selected" : "") + '" data-idx="' + i + '" data-source="pexels"><img src="' + p._thumbUrl + '" alt="' + (p._alt || "") + '" loading="lazy"><span class="photographer"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:relative; top:1px; margin-right:2px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> ' + p._author + '</span></div>').join('');
 
     // Pre-build generated image HTML
     const generatedImageHtml = b.aiGeneratedUrl
@@ -399,17 +391,11 @@
     dom.editorContent.innerHTML = `
       <!-- ═══════ ROW 1: CONTROLS (2 cols) ═══════ -->
       <div class="editor-grid-split" style="flex:0 0 auto; min-height:0;">
-        <!-- COL 1: IMAGE SEARCH CONTROLS (Pexels / Envato tabs) -->
+        <!-- COL 1: PEXELS SEARCH CONTROLS -->
         <div class="panel-column" style="overflow:visible;">
-          <div class="source-tabs">
-            <button class="source-tab ${isPexelsTab ? 'active' : ''}" data-tab="pexels">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              Pexels
-            </button>
-            <button class="source-tab ${!isPexelsTab ? 'active' : ''}" data-tab="envato">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-              Envato
-            </button>
+          <div class="panel-column-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Búsqueda Pexels
           </div>
           <div class="search-field" style="margin-bottom:8px;">
             <label style="display:flex; align-items:center; gap:6px;">
@@ -444,9 +430,8 @@
           </div>
           <div style="font-size:0.65rem; color:var(--accent); padding:2px 0 0; font-family:var(--font-mono); display:flex; align-items:center; gap:4px;">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Query: "${buildContextualQuery(b.searchTerm)}" ${!isPexelsTab ? '(Envato)' : '(Pexels)'}
+            Query: "${buildContextualQuery(b.searchTerm)}"
           </div>
-          ${!isPexelsTab && !ENVATO_TOKEN ? '<div style="font-size:0.65rem; color:var(--warning); padding:4px 0 0; display:flex; align-items:center; gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Configura tu token Envato en Config</div>' : ''}
         </div>
 
         <!-- COL 2: HUGGINGFACE AI CONTROLS -->
@@ -508,10 +493,10 @@
         <div class="panel-column results-col">
           <div style="font-size:0.7rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Resultados ${isPexelsTab ? 'Pexels' : 'Envato'}
+            Resultados Pexels
           </div>
           <div class="pexels-results" id="image-results">
-            ${imageResultsHtml}
+            ${pexelsResultsHtml}
           </div>
         </div>
 
@@ -632,22 +617,10 @@
       btnSearch.addEventListener('click', async () => {
         b.searchTerm = searchInput.value.trim();
         if (!b.searchTerm) { toast('Ingresa un concepto de búsqueda', 'error'); return; }
-        if (state.activeImageSource === 'envato') {
-          await searchEnvato(b);
-        } else {
-          await searchPexels(b);
-        }
+        await searchPexels(b);
         renderEditor();
       });
     }
-
-    // Tab switching (Pexels / Envato)
-    document.querySelectorAll('.source-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        state.activeImageSource = tab.dataset.tab;
-        renderEditor();
-      });
-    });
 
 
 
@@ -839,13 +812,11 @@
       }
     });
 
-    // Image results click (Pexels or Envato)
+    // Pexels image results click
     document.querySelectorAll('#image-results .pexels-thumb').forEach(el => {
       el.addEventListener('click', () => {
         const idx = parseInt(el.dataset.idx);
-        const source = el.dataset.source;
-        const results = source === 'envato' ? (b.envatoResults || []) : (b.pexelsResults || []);
-        const photo = results[idx];
+        const photo = b.pexelsResults[idx];
         if (photo) {
           b.bgImageUrl = photo._largeUrl;
           b.bgImageThumb = photo._thumbUrl;
@@ -1044,55 +1015,6 @@
     } catch (err) {
       console.error(err);
       toast('Error Pexels: ' + err.message, 'error');
-    } finally {
-      hideLoading();
-    }
-  }
-
-  // ═══════════════════════════════════════
-  // ENVATO API (PhotoDune Images)
-  // ═══════════════════════════════════════
-
-  async function searchEnvato(banner) {
-    if (!ENVATO_TOKEN) {
-      toast('Configura tu token Envato en Config primero', 'error');
-      return;
-    }
-    showLoading('Buscando en Envato...');
-    try {
-      const query = buildContextualQuery(banner.searchTerm);
-      const url = `${ENVATO_SEARCH}?site=photodune.net&term=${encodeURIComponent(query)}&page_size=12`;
-      const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${ENVATO_TOKEN}` }
-      });
-      if (!res.ok) {
-        if (res.status === 403 || res.status === 401) {
-          throw new Error('Token Envato inválido o sin permisos');
-        }
-        throw new Error(`Envato API error: ${res.status}`);
-      }
-      const data = await res.json();
-      // Normalize Envato results to unified format
-      banner.envatoResults = (data.matches || []).map(item => ({
-        _thumbUrl: item.previews?.landscape_preview?.landscape_url || item.previews?.icon_with_landscape_preview?.landscape_url || item.previews?.icon_preview?.icon_url || '',
-        _largeUrl: item.previews?.landscape_preview?.landscape_url || item.previews?.icon_with_landscape_preview?.landscape_url || '',
-        _author: item.author_username || 'Envato',
-        _alt: item.description || item.name || '',
-        _envatoId: item.id,
-        _envatoUrl: item.url || '',
-      }));
-      if (banner.envatoResults.length === 0) {
-        toast('No se encontraron imágenes (Envato)', 'error');
-      } else {
-        toast(`${banner.envatoResults.length} imágenes (Envato)`, 'success');
-        if (!banner.bgImageUrl) {
-          banner.bgImageUrl = banner.envatoResults[0]._largeUrl;
-          banner.bgImageThumb = banner.envatoResults[0]._thumbUrl;
-        }
-      }
-    } catch (err) {
-      console.error(err);
-      toast('Error Envato: ' + err.message, 'error');
     } finally {
       hideLoading();
     }
@@ -2273,7 +2195,6 @@
     if (btnSettings && modalSettings) {
       const cfgHfToken = $('#cfg-hf-token');
       const cfgPexelsToken = $('#cfg-pexels-token');
-      const cfgEnvatoToken = $('#cfg-envato-token');
       const cfgExportFormat = $('#cfg-export-format');
       const cfgExportQuality = $('#cfg-export-quality');
       const cfgQualityVal = $('#cfg-quality-val');
@@ -2310,7 +2231,6 @@
       btnSettings.addEventListener('click', () => {
         cfgHfToken.value = localStorage.getItem('hf_token') || '';
         cfgPexelsToken.value = localStorage.getItem('edtech_pexels_token') || '';
-        if (cfgEnvatoToken) cfgEnvatoToken.value = localStorage.getItem('edtech_envato_token') || '';
         if(cfgExportFormat) cfgExportFormat.value = EXPORT_FORMAT;
         if(cfgExportQuality) {
           cfgExportQuality.value = EXPORT_QUALITY;
@@ -2344,17 +2264,6 @@
         } else {
           localStorage.removeItem('edtech_pexels_token');
           PEXELS_KEY = DEFAULT_PEXELS_KEY;
-        }
-
-        if (cfgEnvatoToken) {
-          const newEnvato = cfgEnvatoToken.value.trim();
-          if (newEnvato) {
-            localStorage.setItem('edtech_envato_token', newEnvato);
-            ENVATO_TOKEN = newEnvato;
-          } else {
-            localStorage.removeItem('edtech_envato_token');
-            ENVATO_TOKEN = '';
-          }
         }
 
         if (cfgExportFormat && cfgExportQuality) {
